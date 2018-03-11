@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Display a map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet'/>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+<div id='wrapper'>
+  <div id='map'></div>
+  <div id='text' class='header'></div>
+</div>
+</body>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiY2l0eS13YWxrYWJpbGl0eSIsImEiOiJjamFncnNkODUycHRnMzNuaW14eHE5d24yIn0.0ty0jyl5uuIF4fulta_vjg';
+var token = 'sk.eyJ1IjoiY2l0eS13YWxrYWJpbGl0eSIsImEiOiJjamVtbWxqYnowZ2s0MnFvN3Z1cWtuZ2MwIn0.sJxYfu0jQANnB1TTEJSInA'
+var urlbase_get = 'https://api.mapbox.com/datasets/v1/city-walkability/cjemmtcsi45zj2wpkm6oj6rxr/features?access_token='.concat(token)
+var urlbase_post = 'https://api.mapbox.com/datasets/v1/city-walkability/cjemmtcsi45zj2wpkm6oj6rxr/features'
+var map = new mapboxgl.Map({
+  container: 'map', // container id
+  style: 'mapbox://styles/mapbox/light-v9', // stylesheet location
+  center: [72.85, 19.09], // starting position [lng, lat]
+  hash: true,
+  zoom: 10 // starting zoom
+});
+map.addControl(new mapboxgl.NavigationControl());
+
+var garbage_point_model = {
+  "id": "",
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": []
+  },
+  "properties": {}
+}
+
+map.on('load', function () {
+  document.getElementById('text').innerHTML='Mumbai OpenGarbageDump Map'
+  map.addSource('ward-data', {
+    type: 'geojson',
+    data: 'https://raw.githubusercontent.com/datameet/Municipal_Spatial_Data/master/Mumbai/BMC_Wards.geojson'
+  });
+  map.addSource('open-garbage-dumps',{
+    type: 'geojson',
+    data: urlbase_get
+  });
+  map.addLayer({
+    "id":"ward-poly",
+    "type":"line",
+    "source":"ward-data",
+    "paint": {
+        "line-color": "#ff69b4",
+        "line-width": 1
+      }
+  })
+  map.addLayer({
+    "id": "garbage-dumps",
+    "type":"symbol",
+    "source": "open-garbage-dumps",
+    "layout": {
+      "icon-image": "star-15"
+    }
+  })
+})
+
+map.on('click', function(e) {
+  coord = JSON.stringify(e.lngLat)
+  var popup = new mapboxgl.Popup({closeOnClick: false})
+    .setLngLat(e.lngLat)
+    .setHTML('<p id="popup">Garbage dump has been plotted!</p>')
+    .addTo(map);
+  var garbage_point = garbage_point_model
+  garbage_point.id = JSON.stringify(Date.now())
+  garbage_point.geometry.coordinates = [e.lngLat.lng, e.lngLat.lat]
+  var xhttp = new XMLHttpRequest
+  url_post = urlbase_post + '/' + garbage_point.id + '?access_token=' + token
+  xhttp.open("PUT", url_post, true);
+  xhttp.setRequestHeader("Content-Type", "application/json");
+  xhttp.onreadystatechange = function() {//Call a function when the state changes.
+    if(xhttp.readyState == XMLHttpRequest.DONE && xhttp.status == 200) {
+    }
+  }
+  xhttp.send(JSON.stringify(garbage_point)); 
+  var new_id = 'garbage_dump' + JSON.stringify(Date.now())
+  map.addLayer({
+    "id": new_id,
+    "type":"symbol",
+    "source": {
+      "type":'geojson',
+      "data": garbage_point
+    },
+    "layout": {
+      "icon-image": "star-15"
+    }
+  })
+})
+</script>
+</html>
