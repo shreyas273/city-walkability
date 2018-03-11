@@ -1,5 +1,1 @@
-# city-walkability
-
-- experimenting with a bin for the garbage dump outside Parel station
-- circular flow simulation at Parel station
-- crowd-sourced plotting of problem areas in the city
+OpenGarbageDumps aims to be an easy tool for citizens to be able to plot and identify open garbage dumps. In the future, ward-level data will also be included so that citizens can communicate the incidence of dumps to their local ward officers.
